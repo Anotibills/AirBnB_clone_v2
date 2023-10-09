@@ -12,17 +12,10 @@ def do_clean(number=0):
     '''
     This delete out-of-date archives.
     '''
-    number = max(1, int(number))  # Ensure number is at least 1
+    number = max(1, int(number))
 
-    # Local cleanup
     with lcd("versions"):
-        local_archives = sorted(os.listdir("."))
-        for archive in local_archives[:-number]:
-            local("rm -f {}".format(archive))
+        local("ls -t | tail -n +{} | xargs rm -f".format(number))
 
-    # Remote cleanup
     with cd("/data/web_static/releases"):
-        remote_archives = run("ls -tr | grep 'web_static_'", warn_only=True)
-        remote_archives = remote_archives.split()
-        for archive in remote_archives[:-number]:
-            run("rm -rf {}".format(archive))
+        run("ls -t | grep 'web_static_' | tail -n +{} | xargs rm -rf".format(number))
