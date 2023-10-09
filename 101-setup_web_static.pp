@@ -1,5 +1,3 @@
-# Configures a web server for deployment of web_static.
-
 # Nginx configuration file
 $nginx_conf = "server {
     listen 80 default_server;
@@ -12,7 +10,7 @@ $nginx_conf = "server {
         index index.html index.htm;
     }
     location /redirect_me {
-        return 301 http://github.com/besthor/;
+        return 301 http://cuberule.com/;
     }
     error_page 404 /404.html;
     location /404 {
@@ -21,50 +19,52 @@ $nginx_conf = "server {
     }
 }"
 
-package { 'nginx':
-  ensure   => 'present',
-  provider => 'apt'
-} ->
-
-file { ['/data', '/data/web_static', '/data/web_static/releases', '/data/web_static/releases/test', '/data/web_static/shared']:
-  ensure  => 'directory'
-} ->
+# Define necessary directories and files
+file { ['/data', '/data/web_static', '/data/web_static/releases', '/data/web_static/shared']:
+  ensure => 'directory',
+}
 
 file { '/data/web_static/releases/test/index.html':
   ensure  => 'present',
-  content => "Holberton School Puppet\n"
-} ->
-
-file { '/data/web_static/current':
-  ensure => 'link',
-  target => '/data/web_static/releases/test'
-} ->
-
-exec { 'chown -R ubuntu:ubuntu /data/':
-  path => '/usr/bin/:/usr/local/bin/:/bin/'
+  content => "Holberton School Puppet\n",
 }
 
 file { ['/var/www', '/var/www/html']:
-  ensure => 'directory'
-} ->
+  ensure => 'directory',
+}
 
-file { '/var/www/html/index.html':
+file { ['/var/www/html/index.html', '/var/www/html/404.html']:
   ensure  => 'present',
-  content => "Holberton School Nginx\n"
-} ->
+  content => ["Holberton School Nginx\n", "Ceci n'est pas une page\n"],
+}
 
-file { '/var/www/html/404.html':
-  ensure  => 'present',
-  content => "Ceci n'est pas une page\n"
-} ->
+# Create symbolic link for web_static
+file { '/data/web_static/current':
+  ensure => 'link',
+  target => '/data/web_static/releases/test',
+}
 
+# Install Nginx package
+package { 'nginx':
+  ensure   => 'present',
+  provider => 'apt',
+}
+
+# Configure Nginx using the provided configuration
 file { '/etc/nginx/sites-available/default':
   ensure  => 'present',
-  content => $nginx_conf
-} ->
+  content => $nginx_conf,
+}
 
-service { 'nginx':
-  ensure  => 'running',
-  enable  => true,
-  require => Package['nginx'],
+# Restart Nginx
+exec { 'nginx restart':
+  command => '/etc/init.d/nginx restart',
+  path    => ['/usr/bin', '/usr/local/bin', '/bin'],
+  require => File['/etc/nginx/sites-available/default'],
+}
+
+# Set ownership
+exec { 'chown -R ubuntu:ubuntu /data/':
+  path    => '/usr/bin:/usr/local/bin:/bin',
+  require => File['/data'],
 }
