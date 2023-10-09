@@ -6,7 +6,7 @@ Fabric script file that creates and deploy web server
 from fabric.api import env, local, put, run
 from datetime import datetime
 from os.path import exists
-env.hosts = ['142.44.167.228', '144.217.246.195']
+env.hosts = ['3.90.70.201', '100.26.239.192']
 
 def do_pack():
     '''This generates a tgz archive'''
