@@ -7,9 +7,10 @@ app = Flask(__name__)
 
 
 @app.route("/", strict_slashes=False)
+def hello_hbnb():
     '''It Displays Hello HBNB!'''
-def hello_hbhb():
     return "Hello HBNB!"
+
 
 if __name__ == '__main__':
     '''Starts Flask web application and run on port 5000'''
