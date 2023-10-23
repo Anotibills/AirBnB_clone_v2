@@ -2,7 +2,6 @@
 """This is the console for AirBnB"""
 
 import cmd
-import os
 from models import storage
 from datetime import datetime
 from models.base_model import BaseModel
@@ -23,10 +22,7 @@ class HBNBCommand(cmd.Cmd):
                    "Amenity", "Place", "Review"}
 
     def default(self, line):
-        '''
-        Retrieve all instances of a class and
-        retrieve the number of instances
-        '''
+        '''This retrieve all instances of a class'''
         my_list = line.split('.')
         if len(my_list) >= 2:
             if my_list[1] == "all()":
@@ -50,45 +46,44 @@ class HBNBCommand(cmd.Cmd):
             cmd.Cmd.default(self, line)
 
     def do_create(self, line):
-        '''
-        Creates a new instance of BaseModel, saves it
-        with Exceptions: SyntaxError, NameError
-        '''
-        try:
+        '''This creates a new instance of BaseModel'''
+         try:
             if not line:
                 raise SyntaxError()
             my_list = line.split(" ")
-            obj = eval("{}()".format(my_list[0]))
-            for arg in my_list[1:]:
-                if "=" in arg:
-                    pair = arg.split("=")
-                    key = pair[0]
-                    value = pair[1]
-                    if value[0] == value[-1] == '"':
-                        value = value.replace("_", " ")
-                        value = value.split('"')[1]
-                        value = value.split('"')[0]
+            dic = {}
+            for i in range(1, len(my_list)):
+                elem = my_list[i]
+                kv = elem.split('=')
+                if len(kv) == 1 or "" in kv:
+                    continue
+                if len(kv) > 1 and kv[1][0] == '"':
+                    kv[1] = kv[1].strip('"').replace('_', ' ')
+                    if kv[1].count('"') != kv[1].count('\\\"'):
+                        continue
                     else:
-                        try:
-                            value = int(value)
-                        except:
-                            try:
-                                value = float(value)
-                            except:
-                                continue
-                obj.__dict__[key] = value
+                        kv[1] = kv[1].replace('\\', '')
+                try:
+                    kv[1] = eval(kv[1])
+                except Exception as e:
+                    pass
+                if len(kv) == 2:
+                    dic[kv[0]] = kv[1]
+
+            if dic:
+                obj = eval("{}(**dic)".format(my_list[0]))
+            else:
+                obj = eval("{}()".format(my_list[0]))
             obj.save()
             print("{}".format(obj.id))
+
         except SyntaxError:
             print("** class name missing **")
         except NameError:
             print("** class doesn't exist **")
 
     def do_show(self, line):
-        '''
-        Prints the string representation of an instance
-        with Exceptions: SyntaxError, NameError, IndexError, KeyError
-        '''
+        '''This prints the string representation of an instance'''
         try:
             if not line:
                 raise SyntaxError()
@@ -113,10 +108,7 @@ class HBNBCommand(cmd.Cmd):
             print("** no instance found **")
 
     def do_destroy(self, line):
-        '''
-        Deletes an instance based on the class name and id
-        with Exceptions: SyntaxError, NameError, IndexError, KeyError
-        '''
+        '''This deletes an instance based on the class name'''
         try:
             if not line:
                 raise SyntaxError()
@@ -142,10 +134,7 @@ class HBNBCommand(cmd.Cmd):
             print("** no instance found **")
 
     def count(self, line):
-        '''
-        Count the number of instances of a class
-        with Exceptions: NameError
-        '''
+        '''This counts the number of instances of a class'''
         counter = 0
         try:
             my_list = split(line, " ")
@@ -161,11 +150,7 @@ class HBNBCommand(cmd.Cmd):
             print("** class doesn't exist **")
 
     def strip_clean(self, args):
-        '''
-        Strips the argument and returns a string of command
-        Args:
-            args: input list of args
-        '''
+        '''This strips the argument and returns a string'''
         new_list = []
         new_list.append(args[0])
         try:
@@ -183,11 +168,7 @@ class HBNBCommand(cmd.Cmd):
         return " ".join(i for i in new_list)
 
     def do_update(self, line):
-        '''
-        Updates an instance by adding or updating attributes
-        with Exceptions: SyntaxError, NameError, IndexError, KeyError,
-        AttributeError, ValueError
-        '''
+        '''This updates an instance by adding'''
         try:
             if not line:
                 raise SyntaxError()
@@ -224,21 +205,26 @@ class HBNBCommand(cmd.Cmd):
             print("** value missing **")
 
     def do_all(self, args):
+        """This prints all string representation"""
+        objects = storage.all()
+        my_list = []
+        if not line:
+            for key in objects:
+                my_list.append(objects[key])
+            print(my_list)
+            return
+        try:
+            args = line.split(" ")
+            if args[0] not in self.all_classes:
+                raise NameError()
+            for key in objects:
+                name = key.split('.')
+                if name[0] == args[0]:
+                    my_list.append(objects[key])
+            print(my_list)
 
-        obj = storage.all()
-        print_list = []
-        if args:
-            args = args.split(' ')[0]  # remove possible trailing args
-            if args not in HBNBCommand.all_classes:
-                print("** class doesn't exist **")
-                return
-            for k, v in obj.items():
-                if k.split('.')[0] == args:
-                    print_list.append(str(v))
-        else:
-            for k, v in obj.items():
-                print_list.append(str(v))
-        print(print_list)
+        except NameError:
+            print("** class doesn't exist **")
 
     def do_quit(self, line):
         return True
